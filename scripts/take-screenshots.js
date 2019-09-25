@@ -11,7 +11,6 @@ const {resolve} = require('path');
 })();
 
 const createScreenShot = async name => {
-    console.log(name);
     const htmlUrl = `http://localhost:3002/test/screenshots/cases/${name}.html`;
     const imagePath = resolve(process.cwd(), `./test/screenshots/standards/${name}.png`);
     const browser = await puppeteer.launch({
