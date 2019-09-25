@@ -61,6 +61,6 @@ typings/
 .next
 
 .idea
-./test/dist/screenshots/*.png
-./test/dist/screenshots/test.js
-./test/dist/screenshots/test.js.map
+test/dist/screenshots/*.png
+test/dist/screenshots/test.js
+test/dist/screenshots/test.js.map
