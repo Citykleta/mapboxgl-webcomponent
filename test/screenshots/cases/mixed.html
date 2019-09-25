@@ -2,7 +2,9 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <title>Title</title>
+    <title>mixed</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <base href="http://localhost:3002/">
     <style>
         body {
             margin: 0;
@@ -11,19 +13,9 @@
             width: 100vw;
             background: hsl(47, 26%, 88%);
         }
-
-        span {
-            background: yellow;
-        }
     </style>
-<!--    <link href="http://localhost:8080/mapbox.css" type="text/css" rel="stylesheet"/>-->
-<!--    <link href="http://localhost:8080/mapbox-gl.css" type="text/css" rel="stylesheet"/>-->
 </head>
 <body>
-<!--<lr-geo-map center="-82.367408,23.122419" zoom="12">-->
-<!--    <lr-geo-background-layer background-color="yellow" layer-id="bgrnd"></lr-geo-background-layer>-->
-<!--</lr-geo-map>-->
-
 <lr-geo-map center="-82.40862426452145,23.12735158470521" zoom="14" mb-style="./test/screenshots/data/style.json">
     <lr-geo-json-source source-id="landcover"
                         data-url="./test/screenshots/data/landcover.geojson"></lr-geo-json-source>
@@ -49,7 +41,6 @@
     <lr-geo-fill-layer filter="['==',['get','amenity'],'parking']" fill-color="yellow" layer-id="amenity"
                        source="amenity"></lr-geo-fill-layer>
     <lr-geo-circle-layer layer-id="amenity-points" source="amenity_p" circle-radius="3"></lr-geo-circle-layer>
-    <lr-geo-symbol-layer layer-id="addresses" sources="addresses" text-field="{name}" text-color="red" text-size="21"></lr-geo-symbol-layer>
 </lr-geo-map>
 </body>
 <script type="module">
@@ -59,9 +50,8 @@
         GeoJSONSource,
         BackgroundLayer,
         FillLayer,
-        LineLayer,
-        SymbolLayer
-    } from './components.js';
+        LineLayer
+    } from './dist/index.js';
 
     customElements.define('lr-geo-map', GeoMap);
     customElements.define('lr-geo-json-source', GeoJSONSource);
@@ -69,23 +59,6 @@
     customElements.define('lr-geo-background-layer', BackgroundLayer);
     customElements.define('lr-geo-fill-layer', FillLayer);
     customElements.define('lr-geo-line-layer', LineLayer);
-    customElements.define('lr-geo-symbol-layer', SymbolLayer);
-
-    // const data = {
-    //     type: 'FeatureCollection', features: [{
-    //         type: 'Feature',
-    //         geometry: {
-    //             type: 'Point',
-    //             coordinates: [-82.367408, 23.122419]
-    //         }
-    //     }]
-    // };
-    //
-    // const layer = new CircleLayer();
-    //
-    // document
-    //     .querySelector('lr-geo-json-source[source-id]')
-    //     .data = data;
-
 </script>
+</body>
 </html>

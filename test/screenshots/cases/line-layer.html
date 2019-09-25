@@ -1,0 +1,35 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>line-layer</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <base href="http://localhost:3002/">
+    <style>
+        body {
+            margin: 0;
+            padding: 0;
+            height: 100vh;
+            width: 100vw;
+            background: hsl(47, 26%, 88%);
+        }
+    </style>
+</head>
+<body>
+<lr-geo-map center="-82.40849,23.1327" zoom="14" mb-style="./test/screenshots/data/style.json">
+    <lr-geo-json-source source-id="roads"
+                        data-url="./test/screenshots/data/roads.geojson"></lr-geo-json-source>
+    <lr-geo-json-source source-id="tunnels" data-url="./test/screenshots/data/tunnels.geojson"></lr-geo-json-source>
+    <lr-geo-line-layer line-width="3"  line-color="#666666" layer-id="roads" source="roads"></lr-geo-line-layer>
+    <lr-geo-line-layer layer-id="tunnels" source="tunnels" line-color="purple" line-width="3" line-gap-width="1"
+                       line-dasharray="[1,1]"></lr-geo-line-layer>
+</lr-geo-map>
+<script type="module">
+    import {GeoMap, GeoJSONSource, LineLayer} from './dist/index.js';
+
+    customElements.define('lr-geo-map', GeoMap);
+    customElements.define('lr-geo-json-source', GeoJSONSource);
+    customElements.define('lr-geo-line-layer', LineLayer);
+</script>
+</body>
+</html>

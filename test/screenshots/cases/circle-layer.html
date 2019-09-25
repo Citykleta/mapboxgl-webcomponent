@@ -1,0 +1,33 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>circle-layer</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <base href="http://localhost:3002/">
+    <style>
+        body {
+            margin: 0;
+            padding: 0;
+            height: 100vh;
+            width: 100vw;
+            background: hsl(47, 26%, 88%);
+        }
+    </style>
+</head>
+<body>
+<lr-geo-map center="-82.40849,23.1327" zoom="14" mb-style="./test/screenshots/data/style.json">
+    <lr-geo-json-source source-id="amenity_p"
+                        data-url="./test/screenshots/data/amenity_points.geojson"></lr-geo-json-source>
+    <lr-geo-circle-layer layer-id="amenity-points" circle-color="green" source="amenity_p" circle-radius="3"></lr-geo-circle-layer>
+    <lr-geo-circle-layer circle-stroke-width="2" circle-stroke-color="blue" filter="['==',['get','amenity'],'restaurant']" layer-id="restaurants-points" source="amenity_p" circle-radius="5" circle-color="red"></lr-geo-circle-layer>
+</lr-geo-map>
+<script type="module">
+    import {GeoMap, GeoJSONSource, CircleLayer} from './dist/index.js';
+
+    customElements.define('lr-geo-map', GeoMap);
+    customElements.define('lr-geo-json-source', GeoJSONSource);
+    customElements.define('lr-geo-circle-layer', CircleLayer);
+</script>
+</body>
+</html>

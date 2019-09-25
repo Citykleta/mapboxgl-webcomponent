@@ -1,0 +1,39 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>symbol-layer</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <base href="http://localhost:3002/">
+    <style>
+        body {
+            margin: 0;
+            padding: 0;
+            height: 100vh;
+            width: 100vw;
+            background: hsl(47, 26%, 88%);
+        }
+    </style>
+</head>
+<body>
+<lr-geo-map center="-82.40849,23.1327" zoom="14" mb-style="./test/screenshots/data/style.json">
+    <lr-geo-json-source source-id="amenity_p"
+                        data-url="./test/screenshots/data/amenity_points.geojson"></lr-geo-json-source>
+    <lr-geo-symbol-layer text-font="['Open Sans Bold']" filter="['==',['get','amenity'],'restaurant']" text-color="violet" text-field="['get','name']"  layer-id="amenity-points"  source="amenity_p"></lr-geo-symbol-layer>
+</lr-geo-map>
+<script type="module">
+    import {GeoMap, GeoJSONSource, SymbolLayer} from './dist/index.js';
+
+    // 'text-size': 18,
+    //     'text-offset': [0, -0.4],
+    //     'text-anchor': 'bottom',
+    //     'text-font': ['Open Sans Bold'],
+    //     'text-field': ['get', 'name'],
+    //     visibility: 'visible'
+
+    customElements.define('lr-geo-map', GeoMap);
+    customElements.define('lr-geo-json-source', GeoJSONSource);
+    customElements.define('lr-geo-symbol-layer', SymbolLayer);
+</script>
+</body>
+</html>

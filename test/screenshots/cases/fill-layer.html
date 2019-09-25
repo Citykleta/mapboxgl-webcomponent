@@ -3,14 +3,30 @@
 <head>
     <meta charset="UTF-8">
     <title>fill-layer</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <base href="http://localhost:3002/">
+    <style>
+        body {
+            margin: 0;
+            padding: 0;
+            height: 100vh;
+            width: 100vw;
+            background: hsl(47, 26%, 88%);
+        }
+    </style>
 </head>
 <body>
 <lr-geo-map center="-82.4118,23.1208" zoom="14" mb-style="./test/screenshots/data/style.json">
     <lr-geo-json-source source-id="water_areas"
                         data-url="./test/screenshots/data/water_areas.geojson"></lr-geo-json-source>
-    <lr-geo-fill-layer filter="['==',['get','waterway'],'riverbank']" fill-color="blue" layer-id="river-fill"
+    <lr-geo-fill-layer filter="['==',['get','waterway'],'riverbank']" fill-color="red" layer-id="river-fill"
                        source="water_areas"></lr-geo-fill-layer>
 </lr-geo-map>
-<script type="module"></script>
+<script type="module">
+    import {GeoMap, GeoJSONSource, FillLayer} from './dist/index.js';
+    customElements.define('lr-geo-map', GeoMap);
+    customElements.define('lr-geo-json-source', GeoJSONSource);
+    customElements.define('lr-geo-fill-layer', FillLayer);
+</script>
 </body>
 </html>
