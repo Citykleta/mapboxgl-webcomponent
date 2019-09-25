@@ -1,0 +1,16 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>fill-layer</title>
+</head>
+<body>
+<lr-geo-map center="-82.4118,23.1208" zoom="14" mb-style="./test/screenshots/data/style.json">
+    <lr-geo-json-source source-id="water_areas"
+                        data-url="./test/screenshots/data/water_areas.geojson"></lr-geo-json-source>
+    <lr-geo-fill-layer filter="['==',['get','waterway'],'riverbank']" fill-color="blue" layer-id="river-fill"
+                       source="water_areas"></lr-geo-fill-layer>
+</lr-geo-map>
+<script type="module"></script>
+</body>
+</html>

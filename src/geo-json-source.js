@@ -5,12 +5,24 @@ const EMPTY_GEOJSON_SOURCE_DATA = Object.freeze({
 
 export class GeoJSONSource extends HTMLElement {
 
+    static get observedAttributes() {
+        return ['data-url'];
+    }
+
+    attributeChangedCallback(name, oldValue, newValue) {
+        if (this._map) {
+            if (name === 'data-url' && oldValue !== newValue) {
+                this._map.getSource(this.sourceId).setData(newValue);
+            }
+        }
+    }
+
     set map(value) {
         if (value !== this._map) {
             this._map = value;
             this._map.addSource(this.sourceId, {
                 type: 'geojson',
-                data: this.data
+                data: this.dataUrl ? this.dataUrl : this.data
             });
         }
     }
@@ -24,6 +36,14 @@ export class GeoJSONSource extends HTMLElement {
         if (this._map) {
             this._map.getSource(this.sourceId).setData(value);
         }
+    }
+
+    get dataUrl() {
+        return this.getAttribute('data-url');
+    }
+
+    set dataUrl(value) {
+        this.setAttribute('data-url', value);
     }
 
     get sourceId() {

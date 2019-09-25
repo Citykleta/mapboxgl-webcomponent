@@ -16,21 +16,40 @@
             background: yellow;
         }
     </style>
-    <link href="http://localhost:8080/mapbox.css" type="text/css" rel="stylesheet"/>
-    <link href="http://localhost:8080/mapbox-gl.css" type="text/css" rel="stylesheet"/>
+<!--    <link href="http://localhost:8080/mapbox.css" type="text/css" rel="stylesheet"/>-->
+<!--    <link href="http://localhost:8080/mapbox-gl.css" type="text/css" rel="stylesheet"/>-->
 </head>
 <body>
-<lr-geo-map center="-82.367408,23.122419" zoom="12" mb-style="http://localhost:8080/styles/klokantech-basic/style.json">
-    <lr-geo-json-source source-id="test"></lr-geo-json-source>
-    <lr-geo-fill-layer filter="['==','$type','Polygon']" fill-color="yellow"
-                       source="openmaptiles" source-layer="landuse"
-                       layer-id="fill-layer-filter"></lr-geo-fill-layer>
-    <lr-geo-line-layer layer-id="test-park" line-color="red" line-width="5" source="openmaptiles"
-                       source-layer="park"></lr-geo-line-layer>
-    <lr-geo-symbol-layer text-font="['Klokantech Noto Sans Regular']" text-field="{name:latin}" layer-id="symbol-test"
-                         text-color="red" source="openmaptiles" source-layer="place"></lr-geo-symbol-layer>
-    <lr-geo-circle-layer circle-color="red" circle-radius="5" source="test"
-                         layer-id="test-layer"></lr-geo-circle-layer>
+<!--<lr-geo-map center="-82.367408,23.122419" zoom="12">-->
+<!--    <lr-geo-background-layer background-color="yellow" layer-id="bgrnd"></lr-geo-background-layer>-->
+<!--</lr-geo-map>-->
+
+<lr-geo-map center="-82.40862426452145,23.12735158470521" zoom="14" mb-style="./test/screenshots/data/style.json">
+    <lr-geo-json-source source-id="landcover"
+                        data-url="./test/screenshots/data/landcover.geojson"></lr-geo-json-source>
+    <lr-geo-json-source source-id="water_areas"
+                        data-url="./test/screenshots/data/water_areas.geojson"></lr-geo-json-source>
+    <lr-geo-json-source source-id="roads"
+                        data-url="./test/screenshots/data/roads.geojson"></lr-geo-json-source>
+    <lr-geo-json-source source-id="tunnels" data-url="./test/screenshots/data/tunnels.geojson"></lr-geo-json-source>
+    <lr-geo-json-source source-id="amenity"
+                        data-url="./test/screenshots/data/amenity_polygons.geojson"></lr-geo-json-source>
+    <lr-geo-json-source source-id="amenity_p"
+                        data-url="./test/screenshots/data/amenity_points.geojson"></lr-geo-json-source>
+    <lr-geo-json-source source-id="addresses"
+                        data-url="./test/screenshots/data/addresses.geojson"></lr-geo-json-source>
+
+    <lr-geo-fill-layer filter="['==',['get','waterway'],'riverbank']" fill-color="blue" layer-id="water_areas"
+                       source="water_areas"></lr-geo-fill-layer>
+    <lr-geo-fill-layer fill-color="green" layer-id="landcover"
+                       source="landcover"></lr-geo-fill-layer>
+    <lr-geo-line-layer layer-id="roads" source="roads"></lr-geo-line-layer>
+    <lr-geo-line-layer layer-id="tunnes" source="tunnels" line-color="purple" line-width="3" line-gap-width="1"
+                       line-dasharray="[1,1]"></lr-geo-line-layer>
+    <lr-geo-fill-layer filter="['==',['get','amenity'],'parking']" fill-color="yellow" layer-id="amenity"
+                       source="amenity"></lr-geo-fill-layer>
+    <lr-geo-circle-layer layer-id="amenity-points" source="amenity_p" circle-radius="3"></lr-geo-circle-layer>
+    <lr-geo-symbol-layer layer-id="addresses" sources="addresses" text-field="{name}" text-color="red" text-size="21"></lr-geo-symbol-layer>
 </lr-geo-map>
 </body>
 <script type="module">
@@ -52,19 +71,21 @@
     customElements.define('lr-geo-line-layer', LineLayer);
     customElements.define('lr-geo-symbol-layer', SymbolLayer);
 
-    const data = {
-        type: 'FeatureCollection', features: [{
-            type: 'Feature',
-            geometry: {
-                type: 'Point',
-                coordinates: [-82.367408, 23.122419]
-            }
-        }]
-    };
-
-    document
-        .querySelector('lr-geo-json-source[source-id]')
-        .data = data;
+    // const data = {
+    //     type: 'FeatureCollection', features: [{
+    //         type: 'Feature',
+    //         geometry: {
+    //             type: 'Point',
+    //             coordinates: [-82.367408, 23.122419]
+    //         }
+    //     }]
+    // };
+    //
+    // const layer = new CircleLayer();
+    //
+    // document
+    //     .querySelector('lr-geo-json-source[source-id]')
+    //     .data = data;
 
 </script>
 </html>

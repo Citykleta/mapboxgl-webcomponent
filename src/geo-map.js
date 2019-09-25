@@ -120,14 +120,20 @@ export class GeoMap extends HTMLElement {
 
     connectedCallback() {
         const container = this.shadowRoot.getElementById('map-container');
-        const map = this._map = new mapbox.Map({
+        const options = {
             container,
-            style: this.mbStyle,
+            // style: this.mbStyle,
             center: this.center,
             zoom: this.zoom,
             bearing: this.bearing,
             pitch: this.pitch
-        });
+        };
+
+        if (this.mbStyle) {
+            options.style = this.mbStyle;
+        }
+
+        const map = this._map = new mapbox.Map(options);
 
         map.on('load', ev => {
             this.shadowRoot.querySelector('slot[name=placeholder]').remove();

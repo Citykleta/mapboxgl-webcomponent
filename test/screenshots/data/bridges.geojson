@@ -1,0 +1,9 @@
+{
+"type": "FeatureCollection",
+"name": "bridges",
+"crs": { "type": "name", "properties": { "name": "urn:ogc:def:crs:OGC:1.3:CRS84" } },
+"features": [
+{ "type": "Feature", "properties": { "osm_id": 534297424, "bridge": "yes", "layer": "1", "highway": "tertiary", "name": "Avenida 7ma", "bicycle": null, "horse": null, "access": null, "surface": null, "foot": null, "lanes": "4", "rotatory": null, "sidewalk": null, "maxspeed": null }, "geometry": { "type": "LineString", "coordinates": [ [ -82.4114798, 23.1266767 ], [ -82.4113236, 23.126801 ] ] } },
+{ "type": "Feature", "properties": { "osm_id": 23887658, "bridge": "yes", "layer": "1", "highway": "tertiary", "name": "Puente de Hierro", "bicycle": "yes", "horse": "no", "access": "yes", "surface": "steel", "foot": "yes", "lanes": "2", "rotatory": "yes", "sidewalk": "left", "maxspeed": "40" }, "geometry": { "type": "LineString", "coordinates": [ [ -82.4113236, 23.126801 ], [ -82.4106121, 23.127364 ] ] } }
+]
+}

@@ -106,6 +106,12 @@ export const layerFactory = (layoutProperties, paintProperties, layerType) => {
         connectedCallback() {
             this.setAttribute('slot', 'layers');
         }
+
+        disconnectedCallback() {
+            if (this._map) {
+                this._map.removeLayer(this.layerId);
+            }
+        }
     };
 
     for (const p of [...layoutProperties, ...paintProperties]) {

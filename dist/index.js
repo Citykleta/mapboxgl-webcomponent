@@ -41,7 +41,7 @@ define(["./shared"],function(t){var e=t.createCommonjsModule(function(t){functio
 return mapboxgl;
 
 }));
-//# sourceMappingURL=mapbox-gl.js.map
+
 });
 
 const template = document.createElement('template');
@@ -164,14 +164,20 @@ class GeoMap extends HTMLElement {
 
     connectedCallback() {
         const container = this.shadowRoot.getElementById('map-container');
-        const map = this._map = new mapboxGl.Map({
+        const options = {
             container,
-            style: this.mbStyle,
+            // style: this.mbStyle,
             center: this.center,
             zoom: this.zoom,
             bearing: this.bearing,
             pitch: this.pitch
-        });
+        };
+
+        if (this.mbStyle) {
+            options.style = this.mbStyle;
+        }
+
+        const map = this._map = new mapboxGl.Map(options);
 
         map.on('load', ev => {
             this.shadowRoot.querySelector('slot[name=placeholder]').remove();
@@ -232,12 +238,24 @@ const EMPTY_GEOJSON_SOURCE_DATA = Object.freeze({
 
 class GeoJSONSource extends HTMLElement {
 
+    static get observedAttributes() {
+        return ['data-url'];
+    }
+
+    attributeChangedCallback(name, oldValue, newValue) {
+        if (this._map) {
+            if (name === 'data-url' && oldValue !== newValue) {
+                this._map.getSource(this.sourceId).setData(newValue);
+            }
+        }
+    }
+
     set map(value) {
         if (value !== this._map) {
             this._map = value;
             this._map.addSource(this.sourceId, {
                 type: 'geojson',
-                data: this.data
+                data: this.dataUrl ? this.dataUrl : this.data
             });
         }
     }
@@ -251,6 +269,14 @@ class GeoJSONSource extends HTMLElement {
         if (this._map) {
             this._map.getSource(this.sourceId).setData(value);
         }
+    }
+
+    get dataUrl() {
+        return this.getAttribute('data-url');
+    }
+
+    set dataUrl(value) {
+        this.setAttribute('data-url', value);
     }
 
     get sourceId() {
@@ -374,6 +400,12 @@ const layerFactory = (layoutProperties, paintProperties, layerType) => {
 
         connectedCallback() {
             this.setAttribute('slot', 'layers');
+        }
+
+        disconnectedCallback() {
+            if (this._map) {
+                this._map.removeLayer(this.layerId);
+            }
         }
     };
 
@@ -601,4 +633,4 @@ const PAINT_PROPERTIES$8 = [
 const HillshadeLayer = layerFactory(LAYOUT_PROPERTIES$8, PAINT_PROPERTIES$8, 'hillshade');
 
 export { BackgroundLayer, CircleLayer, FillExtrusionLayer, FillLayer, GeoJSONSource, GeoMap, HeatmapLayer, HillshadeLayer, LineLayer, RasterLayer, SymbolLayer };
-//# sourceMappingURL=components.js.map
+//# sourceMappingURL=index.js.map
