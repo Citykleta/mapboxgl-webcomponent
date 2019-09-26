@@ -20,13 +20,14 @@
     <lr-geo-json-source source-id="roads"
                         data-url="./test/screenshots/data/roads.geojson"></lr-geo-json-source>
     <lr-geo-json-source source-id="tunnels" data-url="./test/screenshots/data/tunnels.geojson"></lr-geo-json-source>
-    <lr-geo-line-layer line-width="3"  line-color="#666666" layer-id="roads" source="roads"></lr-geo-line-layer>
+    <lr-geo-line-layer line-width="3" line-color="#666666" layer-id="roads" source="roads"></lr-geo-line-layer>
     <lr-geo-line-layer layer-id="tunnels" source="tunnels" line-color="purple" line-width="3" line-gap-width="1"
                        line-dasharray="[1,1]"></lr-geo-line-layer>
 </lr-geo-map>
-<script type="module">
-    import {GeoMap, GeoJSONSource, LineLayer} from './dist/index.js';
-
+<script src="./node_modules/mapbox-gl/dist/mapbox-gl.js"></script>
+<script src="./dist/index.js"></script>
+<script>
+    const {GeoMap, GeoJSONSource, LineLayer} = CitykletaMbGlComp;
     customElements.define('lr-geo-map', GeoMap);
     customElements.define('lr-geo-json-source', GeoJSONSource);
     customElements.define('lr-geo-line-layer', LineLayer);

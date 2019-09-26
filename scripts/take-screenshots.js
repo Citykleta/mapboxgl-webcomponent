@@ -13,9 +13,7 @@ const {resolve} = require('path');
 const createScreenShot = async name => {
     const htmlUrl = `http://localhost:3002/test/screenshots/cases/${name}.html`;
     const imagePath = resolve(process.cwd(), `./test/screenshots/standards/${name}.png`);
-    const browser = await puppeteer.launch({
-        executablePath: '/Applications/Google Chrome.app/Contents/MacOS/Google Chrome'
-    });
+    const browser = await puppeteer.launch({});
     const page = await browser.newPage();
     await page.goto(htmlUrl);
     await page.waitFor(2000);

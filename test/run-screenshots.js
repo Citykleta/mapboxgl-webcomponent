@@ -9,7 +9,9 @@ const pixelmatch = require('pixelmatch');
 const createScreenShot = async name => {
     const htmlUrl = `http://localhost:3002/test/screenshots/cases/${name}.html`;
     const imagePath = resolve(process.cwd(), `./test/dist/screenshots/${name}.png`);
-    const browser = await puppeteer.launch({args: ['--no-sandbox', '--disable-setuid-sandbox']});
+    const browser = await puppeteer.launch({
+        args: ['--no-sandbox', '--disable-setuid-sandbox']
+    });
     const page = await browser.newPage();
     await page.goto(htmlUrl);
     await page.waitFor(2000);

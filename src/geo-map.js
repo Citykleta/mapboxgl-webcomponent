@@ -1,4 +1,4 @@
-import mapbox from 'mapbox-gl';
+import mapboxgl from 'mapbox-gl';
 
 const template = document.createElement('template');
 template.innerHTML = `<style>
@@ -131,7 +131,7 @@ export class GeoMap extends HTMLElement {
             options.style = this.getAttribute('mb-style');
         }
 
-        const map = this._map = new mapbox.Map(options);
+        const map = this._map = new mapboxgl.Map(options);
 
         map.on('load', ev => {
             this.shadowRoot.querySelector('slot[name=placeholder]').remove();

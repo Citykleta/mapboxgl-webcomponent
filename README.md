@@ -1,6 +1,6 @@
 # mapboxgl-webcomponent
 
-Use [mapbox-gl]() in a declarative way with web components (no UI framework required)
+Use [mapbox-gl](https://github.com/mapbox/mapbox-gl-js) in a declarative way with web components (no UI framework required)
 
 ## Getting started
 
@@ -8,7 +8,7 @@ Use [mapbox-gl]() in a declarative way with web components (no UI framework requ
 
 simply run ``npm install --save @citykleta/mb-gl-comp``
 
-Unless you use the [cdn bundle file](), mapbox-gl is not installed and you will have to install it too
+mapbox-gl is not installed and you will have to install it too
 
 ``npm install --save mapbox-gl``
 

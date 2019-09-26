@@ -43,15 +43,17 @@
     <lr-geo-circle-layer layer-id="amenity-points" source="amenity_p" circle-radius="3"></lr-geo-circle-layer>
 </lr-geo-map>
 </body>
-<script type="module">
-    import {
+<script src="./node_modules/mapbox-gl/dist/mapbox-gl.js"></script>
+<script src="./dist/index.js"></script>
+<script>
+    const {
         GeoMap,
         CircleLayer,
         GeoJSONSource,
         BackgroundLayer,
         FillLayer,
         LineLayer
-    } from './dist/index.js';
+    } = CitykletaMbGlComp;
 
     customElements.define('lr-geo-map', GeoMap);
     customElements.define('lr-geo-json-source', GeoJSONSource);
