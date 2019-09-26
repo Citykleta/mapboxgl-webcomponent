@@ -1,3 +1,5 @@
+[![CircleCI](https://badgen.net/circleci/github/Citykleta/mapboxgl-webcomponent)](https://circleci.com/gh/Citykleta/mapboxgl-webcomponent)
+
 # mapboxgl-webcomponent
 
 Use [mapbox-gl](https://github.com/mapbox/mapbox-gl-js) in a declarative way with web components (no UI framework required)
