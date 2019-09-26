@@ -3,7 +3,7 @@ const puppeteer = require('puppeteer');
 (async () => {
     try {
         const browser = await puppeteer.launch({
-            args: ['--no-sandbox', '--disable-setuid-sandbox']
+            executablePath: '/Applications/Google Chrome.app/Contents/MacOS/Google Chrome'
         });
         const page = await browser.newPage();
         page.on('console', ev => console.log(ev.text()));

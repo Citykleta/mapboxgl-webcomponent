@@ -1018,4 +1018,224 @@ test('layerFactory', t => {
         t.eq(setLayoutProperty.lastCall, ['test-woot', 'circle-sort-key', ['blah', [3, 4]]]);
     });
 });
+
+const EMPTY_GEOJSON_SOURCE_DATA = Object.freeze({
+    type: 'FeatureCollection',
+    features: []
+});
+
+class GeoJSONSource extends HTMLElement {
+
+    static get observedAttributes() {
+        return ['data-url'];
+    }
+
+    attributeChangedCallback(name, oldValue, newValue) {
+        if (this._map) {
+            if (name === 'data-url' && oldValue !== newValue) {
+                this._map.getSource(this.sourceId).setData(newValue);
+            }
+        }
+    }
+
+    set map(value) {
+        if (value !== this._map) {
+            this._map = value;
+            this._map.addSource(this.sourceId, {
+                type: 'geojson',
+                data: this.dataUrl ? this.dataUrl : this.data
+            });
+        }
+    }
+
+    get data() {
+        return Object.assign({}, this._data);
+    }
+
+    set data(value) {
+        this._data = value;
+        if (this._map) {
+            this._map.getSource(this.sourceId).setData(value);
+        }
+    }
+
+    get dataUrl() {
+        return this.getAttribute('data-url');
+    }
+
+    set dataUrl(value) {
+        this.setAttribute('data-url', value);
+    }
+
+    get sourceId() {
+        return this.getAttribute('source-id');
+    }
+
+    constructor() {
+        super();
+        this._data = EMPTY_GEOJSON_SOURCE_DATA;
+    }
+
+    connectedCallback() {
+        this.setAttribute('slot', 'sources');
+    }
+
+    disconnectedCallback() {
+        if (this._map) {
+            this._map.removeSource(this.sourceId);
+        }
+    }
+}
+
+test('geo source component', t => {
+    customElements.define('test-geojson', GeoJSONSource);
+
+    t.test('when connected, it should set its slot attribute', t => {
+        const el = document.createElement('test-geojson');
+        document
+            .querySelector('body')
+            .appendChild(el);
+
+        t.eq(el.getAttribute('slot'), 'sources');
+        el.remove();
+    });
+
+    t.test('add source when the map property is set', t => {
+        const addSource = fake();
+        const map = {
+            addSource
+        };
+        const el = new GeoJSONSource();
+        el.setAttribute('source-id', 'some_source');
+        el.map = map;
+        t.ok(addSource.calledOnce);
+        t.eq(addSource.calls[0], ['some_source', {
+            type: 'geojson',
+            data: EMPTY_GEOJSON_SOURCE_DATA
+        }]);
+    });
+
+    t.test('add source, when the data-url attribute is set, it should be forwarded', t => {
+        const addSource = fake();
+        const map = {
+            addSource
+        };
+        const el = new GeoJSONSource();
+        el.setAttribute('source-id', 'some_source');
+        el.setAttribute('data-url', 'http://example.com');
+        el.map = map;
+        t.ok(addSource.calledOnce);
+        t.eq(addSource.calls[0], ['some_source', {
+            type: 'geojson',
+            data: 'http://example.com'
+        }]);
+    });
+
+    t.test('should remove the source when element is disconnected', t => {
+        const removeSource = fake();
+        const addSource = fake();
+
+        const map = {
+            removeSource,
+            addSource
+        };
+
+        const el = document.createElement('test-geojson');
+        el.setAttribute('source-id', 'soouurrce');
+        document
+            .querySelector('body')
+            .appendChild(el);
+
+        el.map = map;
+
+        t.eq(el.getAttribute('slot'), 'sources');
+
+        el.remove();
+
+        t.ok(addSource.calledOnce);
+        t.ok(removeSource.calledOnce);
+        t.eq(removeSource.calls[0], ['soouurrce']);
+    });
+
+    t.test('when updating data-url attribute, source data should be changed', t => {
+        const addSource = fake();
+        const setData = fake();
+        const map = {
+            addSource,
+            getSource(id) {
+                if (id !== 'source') {
+                    throw new Error(`expected "source" but got ${id}`);
+                }
+                return {
+                    setData
+                };
+            }
+        };
+        const el = new GeoJSONSource();
+        el.setAttribute('source-id', 'source');
+        el.setAttribute('data-url', 'http://example.com');
+        el.map = map;
+        t.ok(addSource.calledOnce);
+        t.eq(addSource.calls[0], ['source', {
+            type: 'geojson',
+            data: 'http://example.com'
+        }]);
+        el.setAttribute('data-url', 'http://other.com');
+        t.ok(setData.calledOnce);
+        t.eq(setData.calls[0], ['http://other.com']);
+    });
+
+    t.test('when updating the data property, the source should update its data', t => {
+        const addSource = fake();
+        const setData = fake();
+        const map = {
+            addSource,
+            getSource(id) {
+                if (id !== 'source') {
+                    throw new Error(`expected "source" but got ${id}`);
+                }
+                return {
+                    setData
+                };
+            }
+        };
+        const el = new GeoJSONSource();
+        el.setAttribute('source-id', 'source');
+        el.map = map;
+        t.ok(addSource.calledOnce);
+        t.eq(addSource.calls[0], ['source', {
+            type: 'geojson',
+            data: EMPTY_GEOJSON_SOURCE_DATA
+        }]);
+        el.data = {
+            type: 'FeatureCollection',
+            features: [{
+                type: 'Feature',
+                geometry: {
+                    type: 'Point',
+                    coordinates: [-82, 23]
+                }
+            }]
+        };
+        t.ok(setData.calledOnce);
+        t.eq(setData.calls[0], [{
+            type: 'FeatureCollection',
+            features: [{
+                type: 'Feature',
+                geometry: {
+                    type: 'Point',
+                    coordinates: [-82, 23]
+                }
+            }]
+        }]);
+    });
+
+    t.test('dataUrl property should reflect on data-url attribute', t => {
+        const el = new GeoJSONSource();
+        el.setAttribute('data-url', 'foo');
+        t.eq(el.dataUrl, 'foo');
+        el.dataUrl = 'anotherfoo';
+        t.eq(el.getAttribute('data-url'), 'anotherfoo');
+    });
+});
 //# sourceMappingURL=test.js.map

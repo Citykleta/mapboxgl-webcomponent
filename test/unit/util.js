@@ -1,38 +1,6 @@
 import {test} from 'zora';
 import {kebabToCamel, layerFactory, parse, stringify} from '../../src/util.js';
-
-const fake = () => {
-    const calls = [];
-    const fn = function (...args) {
-        calls.push(args);
-    };
-
-    Object.defineProperty(fn, 'calledOnce', {
-        get() {
-            return calls.length === 1;
-        }
-    });
-
-    Object.defineProperty(fn, 'calls', {
-        get() {
-            return calls;
-        }
-    });
-
-    Object.defineProperty(fn, 'callCount', {
-        get() {
-            return calls.length;
-        }
-    });
-
-    Object.defineProperty(fn, 'lastCall', {
-        get() {
-            return calls[calls.length - 1];
-        }
-    });
-
-    return fn;
-};
+import {fake} from './helper.js';
 
 test('parse a number string should return a number', t => {
     t.eq(parse('1'), 1);

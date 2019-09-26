@@ -1,4 +1,4 @@
-const EMPTY_GEOJSON_SOURCE_DATA = Object.freeze({
+export const EMPTY_GEOJSON_SOURCE_DATA = Object.freeze({
     type: 'FeatureCollection',
     features: []
 });
@@ -57,5 +57,11 @@ export class GeoJSONSource extends HTMLElement {
 
     connectedCallback() {
         this.setAttribute('slot', 'sources');
+    }
+
+    disconnectedCallback() {
+        if (this._map) {
+            this._map.removeSource(this.sourceId);
+        }
     }
 }

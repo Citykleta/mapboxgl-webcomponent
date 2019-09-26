@@ -27,5 +27,5 @@ jobs:
       - run: npm run build
 
       # run tests!
-      - run: npm run serve & npm t
+      - run: npm run test:ci
 

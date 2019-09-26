@@ -114,23 +114,21 @@ export class GeoMap extends HTMLElement {
         this.setAttribute('zoom', String(Math.round(+value * 100) / 100));
     }
 
-    get mbStyle() {
-        return this.getAttribute('mb-style');
-    }
-
     connectedCallback() {
         const container = this.shadowRoot.getElementById('map-container');
         const options = {
             container,
-            // style: this.mbStyle,
             center: this.center,
             zoom: this.zoom,
             bearing: this.bearing,
-            pitch: this.pitch
+            pitch: this.pitch,
+            interactive: !this.hasAttribute('no-interactive'),
+            keyboard: !this.hasAttribute('no-keyboard'),
+            accessToken: this.getAttribute('access-token')
         };
 
-        if (this.mbStyle) {
-            options.style = this.mbStyle;
+        if (this.hasAttribute('mb-style')) {
+            options.style = this.getAttribute('mb-style');
         }
 
         const map = this._map = new mapbox.Map(options);
@@ -148,20 +146,34 @@ export class GeoMap extends HTMLElement {
             this._handleLayerChange();
         });
 
+        // todo: refactoring -> maybe set as a function decorator
+        const dispatchCameraChange = () => this.dispatchEvent(new CustomEvent('camera-change', {
+            detail: {
+                center: this.center,
+                bearing: this.bearing,
+                pitch: this.pitch,
+                zoom: this.zoom
+            }
+        }));
+
         map.on('zoomend', ev => {
             this.zoom = map.getZoom();
+            dispatchCameraChange();
         });
 
         map.on('moveend', ev => {
             this.center = map.getCenter().toArray();
+            dispatchCameraChange();
         });
 
-        map.on('ratateend', ev => {
+        map.on('rotateend', ev => {
             this.bearing = map.getBearing();
+            dispatchCameraChange();
         });
 
         map.on('pitchend', ev => {
             this.pitch = map.getPitch();
+            dispatchCameraChange();
         });
     }
 

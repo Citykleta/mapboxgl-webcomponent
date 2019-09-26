@@ -1,16 +1,19 @@
 {
-  "name": "mapbox-webcomponent-test",
+  "name": "@citykleta/mb-gl-comp",
   "version": "0.1.0",
   "description": "",
-  "main": "index.js",
+  "main": "./dist/index",
+  "module": "./dist/module.js",
   "scripts": {
     "serve": "http-serve -p 3002",
     "screenshots": "node ./scripts/take-screenshots.js",
-    "build": "rollup -c ./rollup/build.js",
+    "build": "rollup -c ./rollup/build.js && rollup -c ./rollup/cdn.js",
     "test:build": "rollup -c ./rollup/test.js",
     "test:unit": "node ./test/run-unit.js",
     "test:screenshots": "node ./test/run-screenshots.js",
-    "test": "npm run test:build && npm run test:unit && npm run test:screenshots"
+    "test": "npm run test:build && npm run test:unit && npm run test:screenshots",
+    "dev": "npm run serve & rollup -c ./rollup/cdn.js -w & npm run test:build -- -w",
+    "test:ci": "http-serve -s -p 3002 & (npm run test:build && npm run test:unit | tap-set-exit && npm run test:screenshots | tap-set-exit)"
   },
   "author": "",
   "license": "ISC",
@@ -27,6 +30,8 @@
     "rollup": "^1.21.2",
     "rollup-plugin-commonjs": "^10.1.0",
     "rollup-plugin-node-resolve": "^5.2.0",
+    "rollup-plugin-terser": "^5.1.2",
+    "tap-set-exit": "^1.1.1",
     "zora": "^3.0.3"
   }
 }
