@@ -64,4 +64,5 @@ typings/
 test/dist/screenshots/*.png
 test/dist/screenshots/test.js
 test/dist/screenshots/test.js.map
+dist
 
