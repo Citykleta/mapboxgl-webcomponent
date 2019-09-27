@@ -650,6 +650,21 @@ const kebabToCamel = prop => prop
     })
     .join('');
 
+const layerEventsList = [
+    'mouseup',
+    'click',
+    'dblclick',
+    'mousemove',
+    'mouseenter',
+    'mouseleave',
+    'mouseover',
+    'mouseout',
+    'contextmenu',
+    'touchstart',
+    'touchend',
+    'touchcancel'
+];
+
 const layerFactory = (layoutProperties, paintProperties, layerType) => {
 
     const klass = class extends HTMLElement {
@@ -702,6 +717,13 @@ const layerFactory = (layoutProperties, paintProperties, layerType) => {
                 }
 
                 this._map.addLayer(spec);
+
+                let listener;
+
+                while (listener = this._listenersQueue.shift()) {
+                    this._map.on(listener[0], this.layerId, listener[1]);
+                }
+
             }
         }
 
@@ -719,6 +741,7 @@ const layerFactory = (layoutProperties, paintProperties, layerType) => {
 
         constructor() {
             super();
+            this._listenersQueue = [];
         }
 
         connectedCallback() {
@@ -728,6 +751,26 @@ const layerFactory = (layoutProperties, paintProperties, layerType) => {
         disconnectedCallback() {
             if (this._map) {
                 this._map.removeLayer(this.layerId);
+            }
+        }
+
+        addEventListener(type, listener, options) {
+            if (layerEventsList.includes(type)) {
+                if (this._map) {
+                    this._map.on(type, this.layerId, listener);
+                } else {
+                    this._listenersQueue.push([type, listener]);
+                }
+            } else {
+                super.addEventListener(type, listener, options);
+            }
+        }
+
+        removeEventListener(type, listener, options) {
+            if (layerEventsList.includes(type)) {
+                this._map.off(type, this.layerId, listener);
+            } else {
+                super.removeEventListener(type, listener, options);
             }
         }
     };
@@ -1024,6 +1067,9 @@ const EMPTY_GEOJSON_SOURCE_DATA = Object.freeze({
     features: []
 });
 
+const template = document.createElement('template');
+template.innerHTML = `<slot name="layers"></slot>`;
+
 class GeoJSONSource extends HTMLElement {
 
     static get observedAttributes() {
@@ -1045,6 +1091,7 @@ class GeoJSONSource extends HTMLElement {
                 type: 'geojson',
                 data: this.dataUrl ? this.dataUrl : this.data
             });
+            this._handleLayerChange();
         }
     }
 
@@ -1074,15 +1121,29 @@ class GeoJSONSource extends HTMLElement {
     constructor() {
         super();
         this._data = EMPTY_GEOJSON_SOURCE_DATA;
+        this.attachShadow({mode: 'open'});
+        this.shadowRoot.appendChild(template.content.cloneNode(true));
     }
 
     connectedCallback() {
         this.setAttribute('slot', 'sources');
+        this.shadowRoot.querySelector('slot').addEventListener('slotchange', this._handleLayerChange.bind(this));
     }
 
     disconnectedCallback() {
         if (this._map) {
             this._map.removeSource(this.sourceId);
+        }
+    }
+
+    _handleLayerChange() {
+        const layers = this.shadowRoot
+            .querySelector('slot[name=layers]')
+            .assignedNodes()
+            .filter(el => el.hasAttribute('layer-id'));
+        for (const layer of layers) {
+            layer.setAttribute('source', this.sourceId);
+            layer.map = this._map;
         }
     }
 }

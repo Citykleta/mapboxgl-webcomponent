@@ -18,9 +18,10 @@
 <body>
 <lr-geo-map center="-82.40849,23.1327" zoom="14" mb-style="./test/screenshots/data/style.json">
     <lr-geo-json-source source-id="amenity_p"
-                        data-url="./test/screenshots/data/amenity_points.geojson"></lr-geo-json-source>
-    <lr-geo-circle-layer layer-id="amenity-points" circle-color="green" source="amenity_p"
-                         circle-radius="3"></lr-geo-circle-layer>
+                        data-url="./test/screenshots/data/amenity_points.geojson">
+        <lr-geo-circle-layer layer-id="amenity-points" circle-color="green"
+                             circle-radius="3"></lr-geo-circle-layer>
+    </lr-geo-json-source>
     <lr-geo-circle-layer circle-stroke-width="2" circle-stroke-color="blue"
                          filter="['==',['get','amenity'],'restaurant']" layer-id="restaurants-points" source="amenity_p"
                          circle-radius="5" circle-color="red"></lr-geo-circle-layer>

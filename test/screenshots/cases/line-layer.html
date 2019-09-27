@@ -18,9 +18,11 @@
 <body>
 <lr-geo-map center="-82.40849,23.1327" zoom="14" mb-style="./test/screenshots/data/style.json">
     <lr-geo-json-source source-id="roads"
-                        data-url="./test/screenshots/data/roads.geojson"></lr-geo-json-source>
-    <lr-geo-json-source source-id="tunnels" data-url="./test/screenshots/data/tunnels.geojson"></lr-geo-json-source>
-    <lr-geo-line-layer line-width="3" line-color="#666666" layer-id="roads" source="roads"></lr-geo-line-layer>
+                        data-url="./test/screenshots/data/roads.geojson">
+        <lr-geo-line-layer line-width="3" line-color="#666666" layer-id="roads"></lr-geo-line-layer>
+    </lr-geo-json-source>
+    <lr-geo-json-source source-id="tunnels" data-url="./test/screenshots/data/tunnels.geojson">
+    </lr-geo-json-source>
     <lr-geo-line-layer layer-id="tunnels" source="tunnels" line-color="purple" line-width="3" line-gap-width="1"
                        line-dasharray="[1,1]"></lr-geo-line-layer>
 </lr-geo-map>

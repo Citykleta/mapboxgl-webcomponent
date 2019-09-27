@@ -3,6 +3,9 @@ export const EMPTY_GEOJSON_SOURCE_DATA = Object.freeze({
     features: []
 });
 
+const template = document.createElement('template');
+template.innerHTML = `<slot name="layers"></slot>`;
+
 export class GeoJSONSource extends HTMLElement {
 
     static get observedAttributes() {
@@ -24,6 +27,7 @@ export class GeoJSONSource extends HTMLElement {
                 type: 'geojson',
                 data: this.dataUrl ? this.dataUrl : this.data
             });
+            this._handleLayerChange();
         }
     }
 
@@ -53,15 +57,29 @@ export class GeoJSONSource extends HTMLElement {
     constructor() {
         super();
         this._data = EMPTY_GEOJSON_SOURCE_DATA;
+        this.attachShadow({mode: 'open'});
+        this.shadowRoot.appendChild(template.content.cloneNode(true));
     }
 
     connectedCallback() {
         this.setAttribute('slot', 'sources');
+        this.shadowRoot.querySelector('slot').addEventListener('slotchange', this._handleLayerChange.bind(this));
     }
 
     disconnectedCallback() {
         if (this._map) {
             this._map.removeSource(this.sourceId);
+        }
+    }
+
+    _handleLayerChange() {
+        const layers = this.shadowRoot
+            .querySelector('slot[name=layers]')
+            .assignedNodes()
+            .filter(el => el.hasAttribute('layer-id'));
+        for (const layer of layers) {
+            layer.setAttribute('source', this.sourceId);
+            layer.map = this._map;
         }
     }
 }

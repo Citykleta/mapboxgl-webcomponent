@@ -26,6 +26,57 @@ slot[name=placeholder]{
 <slot name="layers"></slot>
 `;
 
+const mapEventsList = [
+    'resize',
+    'remove',
+    'mousedown',
+    'mouseup',
+    'mouseover',
+    'mousemove',
+    'click',
+    'dblclick',
+    'mouseenter',
+    'mouseleave',
+    'mouseout',
+    'contextmenu',
+    'wheel',
+    'touchstart',
+    'touchend',
+    'touchmove',
+    'touchcancel',
+    'movestart',
+    'move',
+    'moveend',
+    'dragstart',
+    'drag',
+    'dragend',
+    'zoomstart',
+    'zoom',
+    'zoomend',
+    'rotatestart',
+    'rotate',
+    'rotateend',
+    'pitchstart',
+    'pitch',
+    'pitchend',
+    'boxzoomstart',
+    'boxzoomend',
+    'boxzoomcancel',
+    'webglcontextlost',
+    'webglcontextrestored',
+    'load',
+    'render',
+    'idle',
+    'error',
+    'data',
+    'styledata',
+    'sourcedata',
+    'dataloading',
+    'styledataloading',
+    'sourcedataloading',
+    'styleimagemissing'
+];
+
 export class GeoMap extends HTMLElement {
 
     static get observedAttributes() {
@@ -68,6 +119,7 @@ export class GeoMap extends HTMLElement {
         this._isLoading = true;
         this._map = null;
         this._sources = [];
+        this._listenersQueue = [];
         this.attachShadow({mode: 'open'});
         this.shadowRoot.appendChild(template.content.cloneNode(true));
     }
@@ -175,6 +227,32 @@ export class GeoMap extends HTMLElement {
             this.pitch = map.getPitch();
             dispatchCameraChange();
         });
+
+        let listener;
+
+        while (listener = this._listenersQueue.shift()) {
+            this._map.on(listener[0], listener[1]);
+        }
+    }
+
+    addEventListener(type, listener, options) {
+        if (mapEventsList.includes(type)) {
+            if (this._map) {
+                this._map.on(type, listener);
+            } else {
+                this._listenersQueue.push([type, listener]);
+            }
+        } else {
+            super.addEventListener(type, listener, options);
+        }
+    }
+
+    removeEventListener(type, listener, options) {
+        if (mapEventsList.includes(type)) {
+            this._map.off(type, listener);
+        } else {
+            super.removeEventListener(type, listener, options);
+        }
     }
 
     _handleSourceChange() {

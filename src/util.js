@@ -32,6 +32,21 @@ export const kebabToCamel = prop => prop
     })
     .join('');
 
+const layerEventsList = [
+    'mouseup',
+    'click',
+    'dblclick',
+    'mousemove',
+    'mouseenter',
+    'mouseleave',
+    'mouseover',
+    'mouseout',
+    'contextmenu',
+    'touchstart',
+    'touchend',
+    'touchcancel'
+];
+
 export const layerFactory = (layoutProperties, paintProperties, layerType) => {
 
     const klass = class extends HTMLElement {
@@ -84,6 +99,13 @@ export const layerFactory = (layoutProperties, paintProperties, layerType) => {
                 }
 
                 this._map.addLayer(spec);
+
+                let listener;
+
+                while (listener = this._listenersQueue.shift()) {
+                    this._map.on(listener[0], this.layerId, listener[1]);
+                }
+
             }
         }
 
@@ -101,6 +123,7 @@ export const layerFactory = (layoutProperties, paintProperties, layerType) => {
 
         constructor() {
             super();
+            this._listenersQueue = [];
         }
 
         connectedCallback() {
@@ -110,6 +133,26 @@ export const layerFactory = (layoutProperties, paintProperties, layerType) => {
         disconnectedCallback() {
             if (this._map) {
                 this._map.removeLayer(this.layerId);
+            }
+        }
+
+        addEventListener(type, listener, options) {
+            if (layerEventsList.includes(type)) {
+                if (this._map) {
+                    this._map.on(type, this.layerId, listener);
+                } else {
+                    this._listenersQueue.push([type, listener]);
+                }
+            } else {
+                super.addEventListener(type, listener, options);
+            }
+        }
+
+        removeEventListener(type, listener, options) {
+            if (layerEventsList.includes(type)) {
+                this._map.off(type, this.layerId, listener);
+            } else {
+                super.removeEventListener(type, listener, options);
             }
         }
     };

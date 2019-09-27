@@ -10,11 +10,12 @@ const createScreenShot = async name => {
     const htmlUrl = `http://localhost:3002/test/screenshots/cases/${name}.html`;
     const imagePath = resolve(process.cwd(), `./test/dist/screenshots/${name}.png`);
     const browser = await puppeteer.launch({
+        // executablePath: '/Applications/Google Chrome.app/Contents/MacOS/Google Chrome'
         args: ['--no-sandbox', '--disable-setuid-sandbox']
     });
     const page = await browser.newPage();
     await page.goto(htmlUrl);
-    await page.waitFor(2000);
+    await page.waitFor(3000);
     await page.screenshot({path: imagePath});
     await browser.close();
 };
