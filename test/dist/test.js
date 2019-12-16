@@ -156,8 +156,19 @@ const testerFactory = testerLikeProvider();
 const tester = (description, spec, { offset = 0, skip = false, runOnly = false } = defaultTestOptions) => {
     let executionTime = 0;
     let error = null;
+    let done = false;
     const assertions = [];
-    const collect = item => assertions.push(item);
+    const collect = item => {
+        if (done) {
+            throw new Error(`test "${description}" 
+tried to collect an assertion after it has run to its completion. 
+You might have forgotten to wait for an asynchronous task to complete
+------
+${spec.toString()}
+`);
+        }
+        assertions.push(item);
+    };
     const specFunction = skip === true ? noop : function zora_spec_fn() {
         return spec(assert(collect, offset, runOnly));
     };
@@ -170,6 +181,9 @@ const tester = (description, spec, { offset = 0, skip = false, runOnly = false }
         }
         catch (e) {
             error = e;
+        }
+        finally {
+            done = true;
         }
     })();
     return Object.defineProperties(testerFactory(assertions, testRoutine, offset), {
