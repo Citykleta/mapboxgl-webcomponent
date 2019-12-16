@@ -33,6 +33,7 @@ export const kebabToCamel = prop => prop
     .join('');
 
 const layerEventsList = [
+    'mousedown', // ?
     'mouseup',
     'click',
     'dblclick',

@@ -23,7 +23,7 @@ const delegateToCounter = (counter) => (target) => Object.defineProperties(targe
     skipCount: {
         get() {
             return counter.skipCount;
-        },
+        }
     },
     failureCount: {
         get() {
@@ -89,21 +89,77 @@ const counter = () => {
 
 const defaultTestOptions = Object.freeze({
     offset: 0,
-    skip: false
+    skip: false,
+    runOnly: false
 });
 const noop = () => {
 };
-const tester = (description, spec, { offset = 0, skip = false } = defaultTestOptions) => {
-    let id = 0;
-    let pass = true;
-    let executionTime = 0;
-    let error = null;
+const TesterPrototype = {
+    [Symbol.asyncIterator]: async function* () {
+        await this.routine;
+        for (const assertion of this.assertions) {
+            if (assertion[Symbol.asyncIterator]) {
+                // Sub test
+                yield startTestMessage({ description: assertion.description }, this.offset);
+                yield* assertion;
+                if (assertion.error !== null) {
+                    // Bubble up the error and return
+                    this.error = assertion.error;
+                    this.pass = false;
+                    return;
+                }
+            }
+            yield assertionMessage(assertion, this.offset);
+            this.pass = this.pass && assertion.pass;
+            this.counter.update(assertion);
+        }
+        return this.error !== null ?
+            yield bailout(this.error, this.offset) :
+            yield endTestMessage(this, this.offset);
+    }
+};
+const testerLikeProvider = (BaseProto = TesterPrototype) => (assertions, routine, offset) => {
     const testCounter = counter();
     const withTestCounter = delegateToCounter(testCounter);
+    let pass = true;
+    return withTestCounter(Object.create(BaseProto, {
+        routine: {
+            value: routine
+        },
+        assertions: {
+            value: assertions
+        },
+        offset: {
+            value: offset
+        },
+        counter: {
+            value: testCounter
+        },
+        length: {
+            get() {
+                return assertions.length;
+            }
+        },
+        pass: {
+            enumerable: true,
+            get() {
+                return pass;
+            },
+            set(val) {
+                pass = val;
+            }
+        }
+    }));
+};
+const testerFactory = testerLikeProvider();
+
+const tester = (description, spec, { offset = 0, skip = false, runOnly = false } = defaultTestOptions) => {
+    let executionTime = 0;
+    let error = null;
     const assertions = [];
     const collect = item => assertions.push(item);
     const specFunction = skip === true ? noop : function zora_spec_fn() {
-        return spec(assert(collect, offset));
+        return spec(assert(collect, offset, runOnly));
     };
     const testRoutine = (async function () {
         try {
@@ -116,39 +172,13 @@ const tester = (description, spec, { offset = 0, skip = false } = defaultTestOpt
             error = e;
         }
     })();
-    return Object.defineProperties(withTestCounter({
-        [Symbol.asyncIterator]: async function* () {
-            await testRoutine;
-            for (const assertion of assertions) {
-                assertion.id = ++id;
-                if (assertion[Symbol.asyncIterator]) {
-                    // Sub test
-                    yield startTestMessage({ description: assertion.description }, offset);
-                    yield* assertion;
-                    if (assertion.error !== null) {
-                        // Bubble up the error and return
-                        error = assertion.error;
-                        pass = false;
-                        return;
-                    }
-                }
-                yield assertionMessage(assertion, offset);
-                pass = pass && assertion.pass;
-                testCounter.update(assertion);
-            }
-            return error !== null ?
-                yield bailout(error, offset) :
-                yield endTestMessage(this, offset);
-        }
-    }), {
-        description: {
-            enumerable: true,
-            value: description
-        },
-        pass: {
-            enumerable: true,
+    return Object.defineProperties(testerFactory(assertions, testRoutine, offset), {
+        error: {
             get() {
-                return pass;
+                return error;
+            },
+            set(val) {
+                error = val;
             }
         },
         executionTime: {
@@ -157,40 +187,28 @@ const tester = (description, spec, { offset = 0, skip = false } = defaultTestOpt
                 return executionTime;
             }
         },
-        length: {
-            get() {
-                return assertions.length;
-            }
-        },
-        error: {
-            get() {
-                return error;
-            }
-        },
-        routine: {
-            value: testRoutine
-        },
         skip: {
             value: skip
+        },
+        description: {
+            enumerable: true,
+            value: description
         }
     });
 };
 
-var isArray = Array.isArray;
-var keyList = Object.keys;
-var hasProp = Object.prototype.hasOwnProperty;
+// do not edit .js files directly - edit src/index.jst
+
+
 
 var fastDeepEqual = function equal(a, b) {
   if (a === b) return true;
 
   if (a && b && typeof a == 'object' && typeof b == 'object') {
-    var arrA = isArray(a)
-      , arrB = isArray(b)
-      , i
-      , length
-      , key;
+    if (a.constructor !== b.constructor) return false;
 
-    if (arrA && arrB) {
+    var length, i, keys;
+    if (Array.isArray(a)) {
       length = a.length;
       if (length != b.length) return false;
       for (i = length; i-- !== 0;)
@@ -198,35 +216,29 @@ var fastDeepEqual = function equal(a, b) {
       return true;
     }
 
-    if (arrA != arrB) return false;
 
-    var dateA = a instanceof Date
-      , dateB = b instanceof Date;
-    if (dateA != dateB) return false;
-    if (dateA && dateB) return a.getTime() == b.getTime();
 
-    var regexpA = a instanceof RegExp
-      , regexpB = b instanceof RegExp;
-    if (regexpA != regexpB) return false;
-    if (regexpA && regexpB) return a.toString() == b.toString();
+    if (a.constructor === RegExp) return a.source === b.source && a.flags === b.flags;
+    if (a.valueOf !== Object.prototype.valueOf) return a.valueOf() === b.valueOf();
+    if (a.toString !== Object.prototype.toString) return a.toString() === b.toString();
 
-    var keys = keyList(a);
+    keys = Object.keys(a);
     length = keys.length;
-
-    if (length !== keyList(b).length)
-      return false;
+    if (length !== Object.keys(b).length) return false;
 
     for (i = length; i-- !== 0;)
-      if (!hasProp.call(b, keys[i])) return false;
+      if (!Object.prototype.hasOwnProperty.call(b, keys[i])) return false;
 
     for (i = length; i-- !== 0;) {
-      key = keys[i];
+      var key = keys[i];
+
       if (!equal(a[key], b[key])) return false;
     }
 
     return true;
   }
 
+  // true if both NaN, false otherwise
   return a!==a && b!==b;
 };
 
@@ -234,16 +246,17 @@ const isAssertionResult = (result) => {
     return 'operator' in result;
 };
 const specFnRegexp = /zora_spec_fn/;
-const nodeInternal = /node_modules\/.*|\(internal\/.*/;
+const zoraInternal = /zora\/dist\/bundle/;
+const filterStackLine = l => (l && !zoraInternal.test(l) && !l.startsWith('Error') || specFnRegexp.test(l));
 const getAssertionLocation = () => {
     const err = new Error();
     const stack = (err.stack || '')
         .split('\n')
-        .filter(l => !nodeInternal.test(l) && l !== '');
+        .map(l => l.trim())
+        .filter(filterStackLine);
     const userLandIndex = stack.findIndex(l => specFnRegexp.test(l));
-    return (userLandIndex >= 1 ?
-        stack[userLandIndex - 1] : (stack[stack.length - 1] || 'N/A'))
-        .trim()
+    const stackline = userLandIndex >= 1 ? stack[userLandIndex - 1] : (stack[0] || 'N/A');
+    return stackline
         .replace(/^at|^@/, '');
 };
 const assertMethodHook = (fn) => function (...args) {
@@ -342,7 +355,7 @@ const AssertPrototype = {
             actual,
             expected,
             description: description || 'should throw',
-            operator: "throws" /* THROWS */,
+            operator: "throws" /* THROWS */
         };
     }),
     doesNotThrow: assertMethodHook((func, expected, description) => {
@@ -365,7 +378,7 @@ const AssertPrototype = {
         };
     })
 };
-const assert = (collect, offset) => {
+const assert = (collect, offset, runOnly = false) => {
     const actualCollect = item => {
         if (!item.pass) {
             item.at = getAssertionLocation();
@@ -373,46 +386,46 @@ const assert = (collect, offset) => {
         collect(item);
         return item;
     };
+    const test = (description, spec, opts) => {
+        const options = Object.assign({}, defaultTestOptions, opts, { offset: offset + 1, runOnly });
+        const subTest = tester(description, spec, options);
+        collect(subTest);
+        return subTest.routine;
+    };
+    const skip = (description, spec, opts) => {
+        return test(description, spec, Object.assign({}, opts, { skip: true }));
+    };
     return Object.assign(Object.create(AssertPrototype, { collect: { value: actualCollect } }), {
-        test(description, spec, opts = defaultTestOptions) {
-            const subTest = tester(description, spec, Object.assign({}, defaultTestOptions, opts, { offset: offset + 1 }));
-            collect(subTest);
-            return subTest.routine;
+        test(description, spec, opts = {}) {
+            if (runOnly) {
+                return skip(description, spec, opts);
+            }
+            return test(description, spec, opts);
         },
-        skip(description, spec = noop, opts = defaultTestOptions) {
-            return this.test(description, spec, Object.assign({}, opts, { skip: true }));
+        skip(description, spec = noop, opts = {}) {
+            return skip(description, spec, opts);
+        },
+        only(description, spec, opts = {}) {
+            const specFn = runOnly === false ? _ => {
+                throw new Error(`Can not use "only" method when not in run only mode`);
+            } : spec;
+            return test(description, specFn, opts);
         }
     });
 };
 
-// with two arguments
-const curry = (fn) => (a, b) => b === void 0 ? b => fn(a, b) : fn(a, b);
-const toCurriedIterable = gen => curry((a, b) => ({
-    [Symbol.asyncIterator]() {
-        return gen(a, b);
+const map = (fn) => async function* (stream) {
+    for await (const m of stream) {
+        yield fn(m);
     }
-}));
-
-const map = toCurriedIterable(async function* (fn, asyncIterable) {
-    let index = 0;
-    for await (const i of asyncIterable) {
-        yield fn(i, index, asyncIterable);
-        index++;
-    }
+};
+// ! it mutates the underlying structure yet it is more efficient regarding performances
+const flatten = map((m) => {
+    m.offset = 0;
+    return m;
 });
-
-const filter = toCurriedIterable(async function* (fn, asyncIterable) {
-    let index = 0;
-    for await (const i of asyncIterable) {
-        if (fn(i, index, asyncIterable) === true) {
-            yield i;
-        }
-        index++;
-    }
-});
-
-const print = (message, offset = 0) => {
-    console.log(message.padStart(message.length + (offset * 4))); // 4 white space used as indent (see tap-parser)
+const isAssertionResult$1 = (result) => {
+    return 'operator' in result;
 };
 const stringifySymbol = (key, value) => {
     if (typeof value === 'symbol') {
@@ -420,177 +433,252 @@ const stringifySymbol = (key, value) => {
     }
     return value;
 };
-const printYAML = (obj, offset = 0) => {
-    const YAMLOffset = offset + 0.5;
-    print('---', YAMLOffset);
-    for (const [prop, value] of Object.entries(obj)) {
-        print(`${prop}: ${JSON.stringify(stringifySymbol(null, value), stringifySymbol)}`, YAMLOffset + 0.5);
-    }
-    print('...', YAMLOffset);
-};
-const comment = (value, offset) => {
-    print(`# ${value}`, offset);
-};
-const subTestPrinter = (prefix = '') => (message) => {
-    const { data } = message;
-    const value = `${prefix}${data.description}`;
-    comment(value, message.offset);
-};
-const mochaTapSubTest = subTestPrinter('Subtest: ');
-const tapeSubTest = subTestPrinter();
-const assertPrinter = (diagnostic) => (message) => {
-    const { data, offset } = message;
-    const { pass, description, id } = data;
-    const label = pass === true ? 'ok' : 'not ok';
-    if (isAssertionResult(data)) {
-        print(`${label} ${id} - ${description}`, offset);
-        if (pass === false) {
-            printYAML(diagnostic(data), offset);
+
+// @ts-ignore
+const flatDiagnostic = ({ pass, description, ...rest }) => rest;
+const Tap = {
+    print(message, offset = 0) {
+        this.log(message.padStart(message.length + (offset * 4))); // 4 white space used as indent (see tap-parser)
+    },
+    printYAML(obj, offset = 0) {
+        const YAMLOffset = offset + 0.5;
+        this.print('---', YAMLOffset);
+        for (const [prop, value] of Object.entries(obj)) {
+            this.print(`${prop}: ${JSON.stringify(value, stringifySymbol)}`, YAMLOffset + 0.5);
         }
-    }
-    else {
-        const comment = data.skip === true ? 'SKIP' : `${data.executionTime}ms`;
-        print(`${pass ? 'ok' : 'not ok'} ${id} - ${description} # ${comment}`, message.offset);
+        this.print('...', YAMLOffset);
+    },
+    printComment(comment, offset = 0) {
+        this.print(`# ${comment}`, offset);
+    },
+    printBailOut(message) {
+        this.print('Bail out! Unhandled error.');
+    },
+    printTestStart(message) {
+        const { data: { description }, offset } = message;
+        this.printComment(description, offset);
+    },
+    printTestEnd(message) {
+        // do nothing
+    },
+    printAssertion(message) {
+        const { data, offset } = message;
+        const { pass, description } = data;
+        const label = pass === true ? 'ok' : 'not ok';
+        if (isAssertionResult$1(data)) {
+            const id = this.nextId();
+            this.print(`${label} ${id} - ${description}`, offset);
+            if (pass === false) {
+                this.printYAML(flatDiagnostic(data), offset);
+            }
+        }
+        else if (data.skip) {
+            const id = this.nextId();
+            this.print(`${pass ? 'ok' : 'not ok'} ${id} - ${description} # SKIP`, offset);
+        }
+    },
+    printSummary(endMessage) {
+        this.print('', 0);
+        this.printComment(endMessage.data.pass ? 'ok' : 'not ok', 0);
+        this.printComment(`success: ${endMessage.data.successCount}`, 0);
+        this.printComment(`skipped: ${endMessage.data.skipCount}`, 0);
+        this.printComment(`failure: ${endMessage.data.failureCount}`, 0);
+    },
+    async report(stream) {
+        const src = flatten(stream);
+        let lastMessage = null;
+        this.print('TAP version 13');
+        for await (const message of src) {
+            lastMessage = message;
+            switch (message.type) {
+                case "TEST_START" /* TEST_START */:
+                    this.printTestStart(message);
+                    break;
+                case "ASSERTION" /* ASSERTION */:
+                    this.printAssertion(message);
+                    break;
+                case "BAIL_OUT" /* BAIL_OUT */:
+                    this.printBailOut(message);
+                    throw message.data;
+            }
+        }
+        this.print(`1..${lastMessage.data.count}`, 0);
+        this.printSummary(lastMessage);
     }
 };
-const tapeAssert = assertPrinter(({ id, pass, description, ...rest }) => rest);
-const mochaTapAssert = assertPrinter(({ expected, id, pass, description, actual, operator, at, ...rest }) => ({
+const factory = (log) => {
+    let i = 0;
+    return Object.create(Tap, {
+        nextId: {
+            enumerable: true,
+            value: () => {
+                return ++i;
+            }
+        },
+        log: { value: log }
+    });
+};
+
+const indentedDiagnostic = ({ expected, pass, description, actual, operator, at = 'N/A', ...rest }) => ({
     wanted: expected,
     found: actual,
     at,
     operator,
     ...rest
-}));
-const testEnd = (message) => {
-    const length = message.data.length;
-    const { offset } = message;
-    print(`1..${length}`, offset);
-};
-const printBailout = (message) => {
-    print('Bail out! Unhandled error.');
-};
-const reportAsMochaTap = (message) => {
-    switch (message.type) {
-        case "TEST_START" /* TEST_START */:
-            mochaTapSubTest(message);
-            break;
-        case "ASSERTION" /* ASSERTION */:
-            mochaTapAssert(message);
-            break;
-        case "TEST_END" /* TEST_END */:
-            testEnd(message);
-            break;
-        case "BAIL_OUT" /* BAIL_OUT */:
-            printBailout();
-            throw message.data;
-    }
-};
-const reportAsTapeTap = (message) => {
-    switch (message.type) {
-        case "TEST_START" /* TEST_START */:
-            tapeSubTest(message);
-            break;
-        case "ASSERTION" /* ASSERTION */:
-            tapeAssert(message);
-            break;
-        case "BAIL_OUT" /* BAIL_OUT */:
-            printBailout();
-            throw message.data;
-    }
-};
-const flatFilter = filter((message) => {
-    return message.type === "TEST_START" /* TEST_START */
-        || message.type === "BAIL_OUT" /* BAIL_OUT */
-        || (message.type === "ASSERTION" /* ASSERTION */ && (isAssertionResult(message.data) || message.data.skip === true));
 });
-const flattenStream = (stream) => {
-    let id = 0;
-    const mapper = map(message => {
-        if (message.type === "ASSERTION" /* ASSERTION */) {
-            const mappedData = Object.assign(message.data, { id: ++id });
-            return assertionMessage(mappedData, 0);
+const id = function* () {
+    let i = 0;
+    while (true) {
+        yield ++i;
+    }
+};
+const idGen = () => {
+    let stack = [id()];
+    return {
+        [Symbol.iterator]() {
+            return this;
+        },
+        next() {
+            return stack[0].next();
+        },
+        fork() {
+            stack.unshift(id());
+        },
+        merge() {
+            stack.shift();
         }
-        return Object.assign({}, message, { offset: 0 });
-    });
-    return mapper(flatFilter(stream));
+    };
 };
-const printSummary = (harness) => {
-    print('', 0);
-    comment(harness.pass ? 'ok' : 'not ok', 0);
-    comment(`success: ${harness.successCount}`, 0);
-    comment(`skipped: ${harness.skipCount}`, 0);
-    comment(`failure: ${harness.failureCount}`, 0);
-};
-const tapeTapLike = async (stream) => {
-    print('TAP version 13');
-    const streamInstance = flattenStream(stream);
-    for await (const message of streamInstance) {
-        reportAsTapeTap(message);
+const IndentedTap = Object.assign({}, Tap, {
+    printTestStart(message) {
+        const { data: { description }, offset } = message;
+        this.printComment(`Subtest: ${description}`, offset);
+    },
+    printAssertion(message) {
+        const { data, offset } = message;
+        const { pass, description } = data;
+        const label = pass === true ? 'ok' : 'not ok';
+        const id = this.nextId();
+        if (isAssertionResult$1(data)) {
+            this.print(`${label} ${id} - ${description}`, offset);
+            if (pass === false) {
+                this.printYAML(indentedDiagnostic(data), offset);
+            }
+        }
+        else {
+            const comment = data.skip === true ? 'SKIP' : `${data.executionTime}ms`;
+            this.print(`${pass ? 'ok' : 'not ok'} ${id} - ${description} # ${comment}`, message.offset);
+        }
+    },
+    printTestEnd(message) {
+        const length = message.data.length;
+        const { offset } = message;
+        this.print(`1..${length}`, offset);
     }
-    print(`1..${stream.count}`, 0);
-    printSummary(stream);
-};
-const mochaTapLike = async (stream) => {
-    print('TAP version 13');
-    for await (const message of stream) {
-        reportAsMochaTap(message);
-    }
-    printSummary(stream);
-};
-
-const harnessFactory = () => {
-    const tests = [];
-    const testCounter = counter();
-    const withTestCounter = delegateToCounter(testCounter);
-    const rootOffset = 0;
-    const collect = item => tests.push(item);
-    const api = assert(collect, rootOffset);
-    let pass = true;
-    let id = 0;
-    const instance = Object.create(api, {
-        length: {
-            get() {
-                return tests.length;
+});
+const factory$1 = (log) => {
+    const id = idGen();
+    return Object.create(IndentedTap, {
+        nextId: {
+            enumerable: true,
+            value: () => {
+                return id.next().value;
             }
         },
-        pass: {
-            get() {
-                return pass;
-            }
-        }
-    });
-    return withTestCounter(Object.assign(instance, {
-        [Symbol.asyncIterator]: async function* () {
-            for (const t of tests) {
-                t.id = ++id;
-                if (t[Symbol.asyncIterator]) {
-                    // Sub test
-                    yield startTestMessage({ description: t.description }, rootOffset);
-                    yield* t;
-                    if (t.error !== null) {
-                        pass = false;
-                        return;
+        report: {
+            enumerable: true,
+            value: async function (stream) {
+                this.print('TAP version 13');
+                let lastMessage = null;
+                for await (const message of stream) {
+                    lastMessage = message;
+                    switch (message.type) {
+                        case "TEST_START" /* TEST_START */:
+                            id.fork();
+                            this.printTestStart(message);
+                            break;
+                        case "ASSERTION" /* ASSERTION */:
+                            this.printAssertion(message);
+                            break;
+                        case "TEST_END" /* TEST_END */:
+                            id.merge();
+                            this.printTestEnd(message);
+                            break;
+                        case "BAIL_OUT" /* BAIL_OUT */:
+                            this.printBailOut(message);
+                            throw message.data;
                     }
                 }
-                yield assertionMessage(t, rootOffset);
-                pass = pass && t.pass;
-                testCounter.update(t);
+                this.printSummary(lastMessage);
             }
-            yield endTestMessage(this, 0);
         },
-        report: async (reporter = tapeTapLike) => {
-            return reporter(instance);
-        }
-    }));
+        log: { value: log }
+    });
 };
 
+const report = (factory) => (logger = console) => {
+    const log = logger.log.bind(logger);
+    return async (stream) => factory(log).report(stream);
+};
+const tapReporter = report(factory);
+const indentedTapReporter = report(factory$1);
+
+//@ts-ignore
+const mochaTapLike = indentedTapReporter();
+//@ts-ignore
+const tapeTapLike = tapReporter();
+
+const harnessFactory = ({ runOnly = false, indent = false } = {
+    runOnly: false,
+    indent: false
+}) => {
+    const tests = [];
+    const rootOffset = 0;
+    const collect = item => tests.push(item);
+    const api = assert(collect, rootOffset, runOnly);
+    let error = null;
+    const factory = testerLikeProvider(Object.assign(api, TesterPrototype, {
+        report: async function (reporter) {
+            const rep = reporter || (indent ? mochaTapLike : tapeTapLike);
+            return rep(this);
+        }
+    }));
+    return Object.defineProperties(factory(tests, Promise.resolve(), rootOffset), {
+        error: {
+            get() {
+                return error;
+            },
+            set(val) {
+                error = val;
+            }
+        }
+    });
+};
+
+const findConfigurationFlag = (name) => {
+    if (typeof process !== 'undefined') {
+        return process.env[name] === 'true';
+        // @ts-ignore
+    }
+    else if (typeof window !== 'undefined') {
+        // @ts-ignore
+        return Boolean(window[name]);
+    }
+    return false;
+};
+const defaultTestHarness = harnessFactory({
+    runOnly: findConfigurationFlag('RUN_ONLY')
+});
 let autoStart = true;
-let indent = false;
-const defaultTestHarness = harnessFactory();
+let indent = findConfigurationFlag('INDENT');
 const rootTest = defaultTestHarness.test.bind(defaultTestHarness);
-rootTest.indent = () => indent = true;
+rootTest.indent = () => {
+    console.warn('indent function is deprecated, use "INDENT" configuration flag instead');
+    indent = true;
+};
 const test = rootTest;
-const skip = (description, spec, options = {}) => rootTest(description, spec, Object.assign({}, options, { skip: true }));
+const skip = defaultTestHarness.skip.bind(defaultTestHarness);
+const only = defaultTestHarness.only.bind(defaultTestHarness);
 rootTest.skip = skip;
 const equal = defaultTestHarness.equal.bind(defaultTestHarness);
 const notEqual = defaultTestHarness.notEqual.bind(defaultTestHarness);
@@ -651,6 +739,7 @@ const kebabToCamel = prop => prop
     .join('');
 
 const layerEventsList = [
+    'mousedown', // ?
     'mouseup',
     'click',
     'dblclick',
